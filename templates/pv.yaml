@@ -1,0 +1,56 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: pv-sql-{{ .Values.name }}
+spec:
+  storageClassName: storage-sql-{{ .Values.name }}
+  capacity:
+    storage: 1024Gi
+  accessModes:
+    - ReadWriteMany
+  {{ if (eq .Values.shared.type "nfs") }}
+  nfs:
+    server: {{ .Values.shared.host }}
+    path: "{{ .Values.shared.sql }}"
+  {{ else }}
+  hostPath:
+    path: "{{ .Values.shared.sql }}"
+  {{ end }}
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: pv-nosql-{{ .Values.name }}
+spec:
+  storageClassName: storage-nosql-{{ .Values.name }}
+  capacity:
+    storage: 1024Gi
+  accessModes:
+    - ReadWriteMany
+  {{ if (eq .Values.shared.type "nfs") }}
+  nfs:
+    server: {{ .Values.shared.host }}
+    path: "{{ .Values.shared.nosql }}"
+  {{ else }}
+  hostPath:
+    path: "{{ .Values.shared.nosql }}"
+  {{ end }}
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: pv-{{ .Values.name }}
+spec:
+  storageClassName: storage-{{ .Values.name }}
+  capacity:
+    storage: 1024Gi
+  accessModes:
+    - ReadWriteMany
+  {{ if (eq .Values.shared.type "nfs") }}
+  nfs:
+    server: {{ .Values.shared.host }}
+    path: "{{ .Values.shared.common }}"
+  {{ else }}
+  hostPath:
+    path: "{{ .Values.shared.common }}"
+  {{ end }}

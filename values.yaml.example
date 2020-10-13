@@ -1,0 +1,33 @@
+name: dbs-admin
+shared:
+  type: "temp"
+  host: localhost
+  sql: /tmp/databases/sql
+  nosql: /tmp/databases/nosql
+  common: /tmp/other_directory
+  #
+  #type: "local"
+  #host: localhost
+  #sql: /mnt/data/databases/sql
+  #nosql: /mnt/data/databases/nosql
+  #common: /mnt/data/other_directory
+  #
+  #type: "nfs"
+  #host: endpoint-ip-or-host
+  #sql: /remote-nfs-server-path/databases/sql
+  #nosql: /remote-nfs-server-path/databases/nosql
+  #common: /remote-nfs-server-path/other_directory
+servers:
+  sql:
+    image: mysql:latest
+    rootPassword: root
+  nosql:
+    image: mongo:latest
+    rootPassword: root
+panels:
+  sql:
+    image: phpmyadmin/phpmyadmin:latest
+    port: 30080
+  nosql:
+    image: mongo-express:latest
+    port: 30081

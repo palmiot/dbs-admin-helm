@@ -1,0 +1,7 @@
+!.gitignore
+/values.yaml
+/templates/configmap.yaml
+/databases/sql/*
+!/databases/sql/.gitkeep
+/databases/nosql/*
+!/databases/nosql/.gitkeep

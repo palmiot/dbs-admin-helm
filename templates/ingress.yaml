@@ -1,0 +1,31 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: sql-web-{{ .Values.name }}
+spec:
+  tls:
+  - hosts:
+    - localhost
+  rules:
+  - host: localhost
+    http:
+      paths:
+      - backend:
+          serviceName: sql-web-{{ .Values.name }}
+          servicePort: 80
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: nosql-web-{{ .Values.name }}
+spec:
+  tls:
+  - hosts:
+    - localhost
+  rules:
+  - host: localhost
+    http:
+      paths:
+      - backend:
+          serviceName: nosql-web-{{ .Values.name }}
+          servicePort: 8081

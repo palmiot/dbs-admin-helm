@@ -1,0 +1,194 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sql-{{ .Values.name }}
+  labels:
+    app: sql-{{ .Values.name }}
+spec:
+  selector:
+    matchLabels:
+      app: sql-{{ .Values.name }}
+  strategy:
+    type: Recreate
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: sql-{{ .Values.name }}
+    spec:
+      {{ if (eq .Values.shared.type "temp") }}
+      securityContext:
+        fsGroup: 1000
+      {{ else if (eq .Values.shared.type "local") }}
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+      {{ end }}
+      containers:
+      - name: sql-{{ .Values.name }}
+        image: {{ .Values.servers.sql.image }}
+        env:
+        - name: MYSQL_ROOT_PASSWORD
+          value: {{ .Values.servers.sql.rootPassword }}
+        ports:
+        - containerPort: 3306
+        #lifecycle:
+        #  postStart:
+        #    exec:
+        #      command: ["/bin/chmod","-Rf","777", "/var/lib/mysql"]
+        volumeMounts:
+          - name: sql-conf
+            mountPath: /etc/mysql/conf.d/custom.cnf
+            subPath: custom.cnf
+          - name: database-sql
+            mountPath: /var/lib/mysql
+      volumes:
+        - name: sql-conf
+          configMap:
+            name: sql-{{ .Values.name }}
+            items:
+              - key: custom.cnf
+                path: custom.cnf
+        - name: database-sql
+          persistentVolumeClaim:
+            claimName: pvc-sql-{{ .Values.name }}
+        #- name: database-sql
+        #  nfs:
+        #    server: {{ .Values.shared.host }}
+        #    path: {{ .Values.shared.sql }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sql-web-{{ .Values.name }}
+  labels:
+    app: sql-web-{{ .Values.name }}
+spec:
+  selector:
+    matchLabels:
+      app: sql-web-{{ .Values.name }}
+  strategy:
+    type: Recreate
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: sql-web-{{ .Values.name }}
+    spec:
+      containers:
+      - name: sql-web-{{ .Values.name }}
+        image: {{ .Values.panels.sql.image }}
+        env:
+        - name: PHP_INI_SCAN_DIR
+          value: :/usr/local/etc/php/conf.custom
+        - name: PMA_HOST
+          value: sql-{{ .Values.name }}
+        - name: PMA_PORT
+          value: "3306"
+        - name: PMA_USER
+          value: root
+        - name: PMA_PASSWORD
+          value: {{ .Values.servers.sql.rootPassword }}
+        - name: MYSQL_ROOT_PASSWORD
+          value: {{ .Values.servers.sql.rootPassword }}
+        ports:
+        - containerPort: 80
+        volumeMounts:
+          - name: php-conf
+            mountPath: /usr/local/etc/php/conf.custom
+      volumes:
+        - name: php-conf
+          configMap:
+            name: sql-web-{{ .Values.name }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nosql-{{ .Values.name }}
+  labels:
+    app: nosql-{{ .Values.name }}
+spec:
+  selector:
+    matchLabels:
+      app: nosql-{{ .Values.name }}
+  strategy:
+    type: Recreate
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: nosql-{{ .Values.name }}
+    spec:
+      {{ if (eq .Values.shared.type "temp") }}
+      securityContext:
+        fsGroup: 1000
+      {{ else if (eq .Values.shared.type "local") }}
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+      {{ end }}
+      containers:
+      - name: nosql-{{ .Values.name }}
+        image: {{ .Values.servers.nosql.image }}
+        env:
+        - name: MONGO_INITDB_ROOT_USERNAME
+          value: root
+        - name: MONGO_INITDB_ROOT_PASSWORD
+          value: {{ .Values.servers.nosql.rootPassword }}
+        command: ["mongod"]
+        args: ["--config", "/etc/mongod.conf"]
+        ports:
+        - containerPort: 27017
+        volumeMounts:
+          - name: nosql-conf
+            mountPath: /etc/mongod.conf
+            subPath: mongod.conf
+          - name: database-nosql
+            mountPath: /data/db
+      volumes:
+        - name: nosql-conf
+          configMap:
+            name: nosql-{{ .Values.name }}
+            items:
+              - key: mongod.conf
+                path: mongod.conf
+        - name: database-nosql
+          persistentVolumeClaim:
+            claimName: pvc-nosql-{{ .Values.name }}
+        #- name: database-nosql
+        #  nfs:
+        #    server: {{ .Values.shared.host }}
+        #    path: {{ .Values.shared.nosql }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nosql-web-{{ .Values.name }}
+  labels:
+    app: nosql-web-{{ .Values.name }}
+spec:
+  selector:
+    matchLabels:
+      app: nosql-web-{{ .Values.name }}
+  strategy:
+    type: Recreate
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: nosql-web-{{ .Values.name }}
+    spec:
+      containers:
+      - name: nosql-web-{{ .Values.name }}
+        image: {{ .Values.panels.nosql.image }}
+        env:
+        - name: ME_CONFIG_MONGODB_ENABLE_ADMIN
+          value: 'true'
+        - name: ME_CONFIG_MONGODB_ADMINUSERNAME
+          value: root
+        - name: ME_CONFIG_MONGODB_ADMINPASSWORD
+          value: {{ .Values.servers.nosql.rootPassword }}
+        - name: ME_CONFIG_MONGODB_SERVER
+          value: nosql-{{ .Values.name }}
+        ports:
+        - containerPort: 8081

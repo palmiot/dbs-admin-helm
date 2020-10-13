@@ -1,0 +1,35 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: pvc-sql-{{ .Values.name }}
+spec:
+  storageClassName: storage-sql-{{ .Values.name }}
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 1024Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: pvc-nosql-{{ .Values.name }}
+spec:
+  storageClassName: storage-nosql-{{ .Values.name }}
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 1024Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: pvc-{{ .Values.name }}
+spec:
+  storageClassName: storage-{{ .Values.name }}
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 1024Gi

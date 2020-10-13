@@ -1,0 +1,4 @@
+.git
+databases
+values.yaml.example
+templates/configmap.yaml.example
